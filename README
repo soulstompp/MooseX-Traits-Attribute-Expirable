@@ -1,0 +1,26 @@
+MooseX-Traits-Attribute-Expirable
+
+A simple set of attribute traits that can be used to automatically clear an attribute after a given amount of time.
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc MooseX::Traits::Attribute::Expirable
+
+COPYRIGHT AND LICENSE
+
+Copyright (C) 2010 Kenny Flegal <soulstompp@gmail.com>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
