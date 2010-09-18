@@ -2,20 +2,32 @@ package MooseX::Traits::Attribute::Expirable;
 
 use Moose::Role;
 
-our $VERSION   = '1.12';
+our $VERSION   = '0.01';
 
 $VERSION = eval $VERSION;
 
 our $AUTHORITY = 'cpan:soulstompp';
 
+#TODO: reader method
+#TODO: writer method
+#TODO: do we need to consider timezones if this is going to be used on multiple machines (think KiokuDB).
+
+has expiration_date => (
+                        is => 'rw',
+                        isa => 'Maybe[DateTime]',
+                        clearer   => 'clear_expiration_date',
+                        predicate => 'has_expiration_date',
+                       );
+
+#TODO: this needs a decent default.... probably a duration of 0 seconds
 has expires_in => (
                    is        => 'rw',
                    isa       => 'DateTime::Duration',
                    predicate => 'has_expires_in',
-                   default   => 0,
                    clearer   => 'clear_expires_in',
                  );
 
+#TODO: this should be 
 has expires_at => (
                    is        => 'rw',
                    isa       => 'DateTime',
@@ -30,108 +42,125 @@ sub _build_expires_in {
 }
 
 after install_accessors => sub {  
-    my ($self, $inline) = @_;
+    my ($attribute, $inline) = @_;
 
-    my $attribute = $self;
-    my $attribute_name = $self->name;
-    my $attribute_class = $self->associated_class;
-    my $attribute_meta = $self->meta;
+    #TODO: make sure that we play nicely with inline operations.
 
-    if ($self->get_read_method() eq $self->get_write_method()) {
-        $attribute_class->add_around_method_modifier($self->accessor, sub {
-                                                                           my $orig = shift;
-                                                                           my $self = shift;
+    my $attribute_name = $attribute->name;
+    my $attribute_class = $attribute->associated_class;
+    my $attribute_meta = $attribute->meta;
 
-                                                                           my @args = @_;
+    if ($attribute->get_read_method() eq $attribute->get_write_method()) {
+        $attribute_class->add_around_method_modifier($attribute->accessor, sub {
+                                                                                my $orig = shift;
+                                                                                my $self = shift;
 
-                                                                           if (scalar @args) {
-                                                                               my $expires_date = DateTime->now();
-    
-                                                                               $expires_date->add($attribute->expires_in());
-                                                                                       
-                                                                               $attribute->expires_at($expires_date);
+                                                                                my @args = @_;
 
-                                                                               return $self->$orig(@_);
-                                                                           }
-                                                                           else {
-                                                                               return unless $attribute->has_expires_at();
+                                                                                if (scalar @args) {
+                                                                                   $attribute->_reset_expiration_date();
+                                                                              
+                                                                                   return $self->$orig(@_);
+                                                                                }
+                                                                                else {
+                                                                                    if ($attribute->_is_expired()) {
+                                                                                        $attribute->clear_value($self);
 
-                                                                               if (_attribute_has_expired($attribute)) {
-                                                                                   $attribute->clear_value($self);
-
-                                                                                   if ($attribute->is_lazy()) {
-                                                                                       return $attribute->get_value($self); 
-                                                                                   }
-                                                                                   else {
-                                                                                       # for non-lazy attributes I am just going to return the default, which may be undef.
-                                                                                       # Is this a good idea? It might be better to demand or assert laziness.
-                                                                                       return $attribute->default();
-                                                                                   }
-                                                                               }
+                                                                                        if ($attribute->is_lazy()) {
+                                                                                            return $attribute->get_value($self); 
+                                                                                        }
+                                                                                        else {
+                                                                                            # for non-lazy attributes I am just going to return the default, which may be undef.
+                                                                                            # Is this a good idea? It might be better to demand or assert laziness.
+                                                                                            return $attribute->default();
+                                                                                        }
+                                                                                    }
                                                                                    
-                                                                               return $self->$orig();
-
-                                                                           }
+                                                                                    return $self->$orig();
+                                                                                }
                                                                           });
 
 
     }
     else {
-       if ($self->has_read_method) {
-           $attribute_class->add_around_method_modifier($self->get_read_method, sub {
-                                                                                     die "named reader methods haven't been implemented yet";
-                                                                                    });
+       if ($attribute->has_read_method) {
+           #TODO: couldn't this just be a before method modifier?
+           $attribute_class->add_around_method_modifier($attribute->get_read_method, sub {
+                                                                                          die "named reader methods haven't been implemented yet";
+                                                                                         });
        }
 
-       if ($self->has_write_method) {
-           $attribute_class->add_around_method_modifier($self->get_write_method, sub {
-                                                                                      die "named reader methods haven't been implemented yet";
-                                                                                     });
+       if ($attribute->has_write_method) {
+           #TODO: couldn't this just be an after method modifier?
+           $attribute_class->add_around_method_modifier($attribute->get_write_method, sub {
+                                                                                           my $orig = shift;
+                                                                                           my $self = shift;
+
+                                                                                           my @args = @_;
+
+                                                                                           $attribute->_reset_expiration_date();
+
+                                                                                           return $self->$orig(@_);
+                                                                                          });
        }
     }
 
-    if ($self->predicate) {
-         $attribute_class->add_around_method_modifier($self->predicate, sub { 
-                                                                             my $orig = shift;
-                                                                             my $self = shift;
-                                                                             
-                                                                             return $self->$orig() unless $self->has_expires_at();
-
-                                                                             if ($self->_attribute_has_expired($attribute)) {
-                                                                                 return 0;
-                                                                             }
-                                                                             else {
-                                                                                 return $self->$orig();
-                                                                             }
-                                                                            });
+    #TODO: test this!
+    if ($attribute->predicate) {
+         $attribute_class->add_around_method_modifier($attribute->predicate, sub { 
+                                                                                  my $orig = shift;
+                                                                                  my $self = shift;
+                                                                                  
+                                                                                  if ($attribute->_is_expired()) {
+                                                                                      return 0;
+                                                                                  }
+                                                                                  else {
+                                                                                      return $self->$orig();
+                                                                                  }
+                                                                                 });
 
     }
 
-    if ($self->clearer) {
-         $attribute_class->add_before_method_modifier($self->clearer, sub { 
-                                                                           my $self = shift;
-
-                                                                           $self->_clear_expires_at();
-                                                                            
-                                                                           print "i am after the write\n";
-                                                                          });
+    #TODO: test this!
+    if ($attribute->clearer) {
+         $attribute_class->add_before_method_modifier($attribute->clearer, sub { 
+                                                                                my $self = shift;
+   
+                                                                                $attribute->_clear_expiration_date();
+                                                                               });
 
 
     }
 };
 
+sub _is_expired {
+    my $attribute = shift;
+   
+    return undef unless defined $attribute->expiration_date(); 
 
-sub _attribute_has_expired {
-    my ($attribute) = @_;
-    
     my $now = DateTime->now();
 
-    if ($now >= $attribute->expires_at()) {
+    if ($now >= $attribute->expiration_date()) {
         return 1;
     }
     else {
         return 0;
     }
+}
+
+sub _reset_expiration_date {
+    my $attribute = shift;
+
+    #TODO: test this!
+    return $attribute->expiration_date($attribute->expires_at()) if $attribute->has_expires_at();
+
+    my $expires_date = DateTime->now();
+   
+    $expires_date->add($attribute->expires_in());
+          
+    $attribute->expiration_date($expires_date);
+  
+    return 1;
 }
 
 no Moose::Role;
