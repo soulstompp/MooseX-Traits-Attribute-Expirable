@@ -99,6 +99,10 @@ after install_accessors => sub {
        if ($attribute->has_read_method) {
            #TODO: couldn't this just be a before method modifier?
            $attribute_class->add_around_method_modifier($attribute->get_read_method, sub {
+                                                                                          my $orig = shift;
+                                                                                          my $self = shift;
+
+
                                                                                           die "named reader methods haven't been implemented yet";
                                                                                          });
        }
@@ -110,6 +114,8 @@ after install_accessors => sub {
                                                                                            my $self = shift;
 
                                                                                            my @args = @_;
+
+                                                                                           print "the named writer is running!\n";
 
                                                                                            $attribute->_reset_expiration_date();
 
