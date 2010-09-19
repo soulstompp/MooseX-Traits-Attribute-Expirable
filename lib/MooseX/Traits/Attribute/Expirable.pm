@@ -11,6 +11,19 @@ our $AUTHORITY = 'cpan:soulstompp';
 #TODO: reader method
 #TODO: writer method
 #TODO: do we need to consider timezones if this is going to be used on multiple machines (think KiokuDB).
+with 'Moose::Meta::Attribute::Native::Trait';
+
+use Moose::Meta::Attribute::Custom::MethodProvider::Expirable;
+
+has 'method_provider' => (
+                          is => 'ro',
+                          isa       => 'ClassName',
+                          predicate => 'has_method_provider',
+                          default   => 'Moose::Meta::Attribute::Custom::MethodProvider::Expirable',
+                         );
+
+sub _default_is { 'ro' }
+sub _helper_type { 'Any' }
 
 has expiration_date => (
                         is => 'rw',

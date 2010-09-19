@@ -27,6 +27,9 @@ has did_something_recently => (
                                 isa => 'Bool',
                                 default => 0,
                                 expires_in => $recently,
+                                handles => {
+                                            expire_did_something_recently => 'expire',
+                                           }
                               );
 
 sub _build_did_something_recently {
@@ -51,7 +54,7 @@ use Test::More;
 
 my $t = Test->new();
 
-ok($t->do_something(), 'did something!');
+ok($t->do_something, 'did something!');
 
 is ($t->did_something_recently, 1, 'did something recently immediately');
 
@@ -66,5 +69,9 @@ is ($t->did_something_recently, 0, 'did something recently some 6 seconds later'
 ok($t->do_something(), 'did something again!');
 
 is ($t->did_something_recently, 1, 'did something recently after doing something again');
+
+$t->expire_did_something_recently;
+
+is ($t->did_something_recently, 0, 'did something recently after expire via helper');
 
 done_testing;
