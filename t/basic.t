@@ -22,6 +22,7 @@ has did_something_recently => (
                                 is     => 'rw', 
                                 isa => 'Bool',
                                 default => 0,
+                                predicate => 'has_did_something_recently',
                                 expires_in => 5,
                                 handles => {
                                             expire_did_something_recently => 'expire',
@@ -54,13 +55,17 @@ ok($t->do_something, 'did something!');
 
 is ($t->did_something_recently, 1, 'did something recently immediately');
 
+is ($t->has_did_something_recently, 1, 'has did something recently immediately');
+
 sleep 4;
 
 is ($t->did_something_recently, 1, 'did something recently some 4 seconds later');
+is ($t->has_did_something_recently, 1, 'has did something some 4 seconds later');
 
 sleep 2;
 
 is ($t->did_something_recently, 0, 'did something recently some 6 seconds later');
+is ($t->has_did_something_recently, 0, 'has did something some 6 seconds later');
 
 ok($t->do_something(), 'did something again!');
 
