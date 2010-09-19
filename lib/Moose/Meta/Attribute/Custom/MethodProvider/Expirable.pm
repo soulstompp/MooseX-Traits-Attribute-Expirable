@@ -6,15 +6,19 @@ our $VERSION   = '0.01';
 $VERSION = eval $VERSION;
 our $AUTHORITY = 'cpan:soulstompp';
 
-#TODO: this will eventually be our expire method
-
 sub expire : method {
     my ( $attr, $reader, $writer ) = @_;
 
     my $now = DateTime->now();
-    #TODO: this has to support builders as well.
-    #TODO: shouldn't this clear expires_at?
+    
+    $attr->clear_expires_at();
     return sub { $attr->expiration_date($now) };
+}
+
+sub expire_at : method {
+    my ( $attr, $reader, $writer ) = @_;
+
+    return sub { $attr->expires_at($_[1]) };
 }
 
 1;
