@@ -29,12 +29,12 @@ __END__
 
 =head1 NAME
 
-Moose::Meta::Attribute::Native::MethodProvider::Counter - role providing method generators for Counter trait
+Moose::Meta::Attribute::Custom::MethodProvider::Expirable - role providing method generators for Expirable trait
 
 =head1 DESCRIPTION
 
 This is a role which provides the method generators for
-L<Moose::Meta::Attribute::Native::Trait::Counter>.  Please check there for
+L<Moose::Meta::Attribute::Custom::Trait::Expirable>.  Please check there for
 documentation on what methods are provided.
 
 =head1 METHODS
@@ -45,19 +45,13 @@ documentation on what methods are provided.
 
 =back
 
-=head1 BUGS
-
-See L<Moose/BUGS> for details on reporting bugs.
-
 =head1 AUTHOR
 
-Stevan Little E<lt>stevan@iinteractive.comE<gt>
+Kenny Flegal E<lt>soulstompp@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2007-2009 by Infinity Interactive, Inc.
-
-L<http://www.iinteractive.com>
+Copyright 2010 by Kenny Flegal
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -190,3 +190,36 @@ sub _get_fresh_value {
 no Moose::Role;
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+MooseX::Traits::Attribute::Expirable - Trait which ensures that a value from a set/build/default expires after a given set of time.
+
+=head1 DESCRIPTION
+
+This is a role which provides an expiration date which can be specified or calculated. An attribute's reader can safely be accessed without worrying about if it should be cleared and then run before hand. This is especially useful for costly build operations or attribute values that should be refreshed after a time duration, at a specific time or multiple specific times (such as every Monday at 8:00 am).
+
+=head1 METHODS
+
+=over 4
+
+=item B<meta>
+
+=back
+
+=head1 AUTHOR
+
+Kenny Flegal E<lt>soulstompp@gmail.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2010 by Kenny Flegal
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
