@@ -8,6 +8,15 @@ use DateTime;
 use DateTime::Duration;
 use MooseX::Traits::Attribute::Expirable;
 
+#TODO: test with builder
+#TODO: test with laziness
+#TODO: test to make sure it requires at least a default
+#TODO: test with at least two attributes
+#TODO: test clear
+#TODO: test predicate
+#TODO: test named writer
+#TODO: test named reader
+
 my $recently = DateTime::Duration->new(
                                        seconds => 5,  
                                       );
@@ -57,6 +66,5 @@ is ($t->did_something_recently, 0, 'did something recently some 6 seconds later'
 ok($t->do_something(), 'did something again!');
 
 is ($t->did_something_recently, 1, 'did something recently after doing something again');
-
 
 done_testing;
