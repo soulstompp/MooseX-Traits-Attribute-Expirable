@@ -4,19 +4,7 @@ use Moose::Role;
 
 with 'Moose::Meta::Attribute::Native::Trait';
 
-use Moose::Meta::Attribute::Custom::MethodProvider::Expirable;
-
-has 'method_provider' => (
-                          is => 'ro',
-                          isa       => 'ClassName',
-                          predicate => 'has_method_provider',
-                          default   => 'Moose::Meta::Attribute::Custom::MethodProvider::Expirable',
-                         );
-
 sub register_implementation { 'MooseX::Traits::Attribute::Expirable' }
-
-sub _default_is { 'ro' }
-sub _helper_type { 'Any' }
 
 no Moose::Role;
 
