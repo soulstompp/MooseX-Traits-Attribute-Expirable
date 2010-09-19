@@ -8,12 +8,12 @@ $VERSION = eval $VERSION;
 
 our $AUTHORITY = 'cpan:soulstompp';
 
-#TODO: reader method
-#TODO: writer method
-#TODO: do we need to consider timezones if this is going to be used on multiple machines (think KiokuDB).
+#TODO: do we need to consider timezones if this is going to be used on multiple machines (think KiokuDB)?
 with 'Moose::Meta::Attribute::Native::Trait';
 
 use Moose::Meta::Attribute::Custom::MethodProvider::Expirable;
+#TODO: make this an install dependency
+use MooseX::Types::DateTime;
 
 has 'method_provider' => (
                           is => 'ro',
@@ -48,12 +48,6 @@ has expires_at => (
                    clearer   => 'clear_expires_at',
                   );
 
-sub _build_expires_in {
-    my $self = shift;
-
-    return 0;
-}
-
 after install_accessors => sub {  
     my ($attribute, $inline) = @_;
 
@@ -76,20 +70,7 @@ after install_accessors => sub {
                                                                                    return $self->$orig(@_);
                                                                                 }
                                                                                 else {
-                                                                                    if ($attribute->_is_expired()) {
-                                                                                        $attribute->clear_value($self);
-
-                                                                                        if ($attribute->is_lazy()) {
-                                                                                            return $attribute->get_value($self); 
-                                                                                        }
-                                                                                        else {
-                                                                                            # for non-lazy attributes I am just going to return the default, which may be undef.
-                                                                                            # Is this a good idea? It might be better to demand or assert laziness.
-                                                                                            return $attribute->default();
-                                                                                        }
-                                                                                    }
-                                                                                   
-                                                                                    return $self->$orig();
+                                                                                    return $attribute->_get_fresh_value($self);
                                                                                 }
                                                                           });
 
@@ -102,8 +83,9 @@ after install_accessors => sub {
                                                                                           my $orig = shift;
                                                                                           my $self = shift;
 
-
-                                                                                          die "named reader methods haven't been implemented yet";
+                                                                                          print "the named writer is running!\n";
+                                                                                          
+                                                                                          return $attribute->_get_fresh_value($self);
                                                                                          });
        }
 
@@ -180,6 +162,27 @@ sub _reset_expiration_date {
     $attribute->expiration_date($expires_date);
   
     return 1;
+}
+
+sub _get_fresh_value {
+    my ($attribute, $attr_instance) = @_;
+
+    if ($attribute->_is_expired()) {
+        $attribute->clear_value($attr_instance);
+ 
+        if ($attribute->is_lazy()) {
+            return $attribute->get_value($attr_instance); 
+        }
+        else {
+            # for non-lazy attributes I am just going to return the default, which may be undef.
+            # Is this a good idea? It might be better to demand or assert laziness.
+            
+            return $attribute->default();
+        }
+    }
+    else {
+        $attribute->get_value($attr_instance);
+    }
 }
 
 no Moose::Role;
