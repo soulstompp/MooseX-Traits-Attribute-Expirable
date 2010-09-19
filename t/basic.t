@@ -17,16 +17,12 @@ use MooseX::Traits::Attribute::Expirable;
 #TODO: test named writer
 #TODO: test named reader
 
-my $recently = DateTime::Duration->new(
-                                       seconds => 5,  
-                                      );
-
 has did_something_recently => ( 
                                 traits => [qw(Expirable)], 
                                 is     => 'rw', 
                                 isa => 'Bool',
                                 default => 0,
-                                expires_in => $recently,
+                                expires_in => 5,
                                 handles => {
                                             expire_did_something_recently => 'expire',
                                            }

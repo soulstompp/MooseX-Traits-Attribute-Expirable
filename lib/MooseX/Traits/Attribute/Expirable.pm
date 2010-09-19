@@ -38,6 +38,7 @@ has expires_in => (
                    isa       => 'DateTime::Duration',
                    predicate => 'has_expires_in',
                    clearer   => 'clear_expires_in',
+                   coerce    => 1,
                  );
 
 #TODO: this should be 
@@ -46,6 +47,7 @@ has expires_at => (
                    isa       => 'DateTime',
                    predicate => 'has_expires_at',
                    clearer   => 'clear_expires_at',
+                   coerce    => 1,
                   );
 
 after install_accessors => sub {  
