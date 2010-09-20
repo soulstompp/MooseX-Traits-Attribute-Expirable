@@ -12,7 +12,7 @@ sub expire : method {
     my $now = DateTime->now();
     
     $attr->clear_expires_at();
-    return sub { $attr->expiration_date($now) };
+    return sub { $attr->_expiration_date($now) };
 }
 
 sub expire_at : method {

@@ -26,26 +26,29 @@ has 'method_provider' => (
 sub _default_is { 'ro' }
 sub _helper_type { 'Any' }
 
-has expiration_date => (
-                        is => 'rw',
-                        isa => 'Maybe[DateTime]',
-                        clearer   => 'clear_expiration_date',
-                        predicate => 'has_expiration_date',
-                       );
+has _expiration_date => (
+                         is => 'rw',
+                         isa => 'Maybe[DateTime]',
+                         required => 0,
+                         clearer   => '_clear__expiration_date',
+                         predicate => 'has__expiration_date',
+                        );
 
+#TODO: check to make sure expires_in and expires_at aren't set at the same time
 #TODO: this needs a decent default.... probably a duration of 0 seconds
 has expires_in => (
                    is        => 'rw',
                    isa       => 'DateTime::Duration',
                    predicate => 'has_expires_in',
                    clearer   => 'clear_expires_in',
+                   required  => 0,
                    coerce    => 1,
                  );
 
-#TODO: this should be 
 has expires_at => (
                    is        => 'rw',
                    isa       => 'DateTime',
+                   required  => 0,
                    predicate => 'has_expires_at',
                    clearer   => 'clear_expires_at',
                    coerce    => 1,
@@ -54,7 +57,7 @@ has expires_at => (
 after install_accessors => sub {  
     my ($attr, $inline) = @_;
 
-    #TODO: make sure that we play nicely with inline operations.
+    #TODO: make sure that we play nicely with inline methods.
 
     my $attr_name = $attr->name;
     my $attr_class = $attr->associated_class;
@@ -68,7 +71,7 @@ after install_accessors => sub {
                                                                       my @args = @_;
 
                                                                       if (scalar @args) {
-                                                                          $attr->_reset_expiration_date();
+                                                                          $attr->_reset__expiration_date();
                                                                               
                                                                           return $self->$orig(@_);
                                                                       }
@@ -102,7 +105,7 @@ after install_accessors => sub {
 
                                                                                  print "the named writer is running!\n";
 
-                                                                                 $attr->_reset_expiration_date();
+                                                                                 $attr->_reset__expiration_date();
 
                                                                                  return $self->$orig(@_);
                                                                                 });
@@ -113,9 +116,9 @@ after install_accessors => sub {
          $attr_class->add_around_method_modifier($attr->predicate, sub { 
                                                                         my $orig = shift;
                                                                         my $self = shift;
-                                                                                  
+                                                                        
                                                                         if ($attr->_is_expired()) {
-                                                                            return 0;
+                                                                            return '';
                                                                         }
                                                                         else {
                                                                             return $self->$orig();
@@ -124,13 +127,12 @@ after install_accessors => sub {
 
     }
 
-    #TODO: test this!
     if ($attr->clearer) {
-         $attr_class->add_before_method_modifier($attr->clearer, sub { 
-                                                                      my $self = shift;
+         $attr_class->add_after_method_modifier($attr->clearer, sub { 
+                                                                     my $self = shift;
    
-                                                                      $attr->_clear_expiration_date();
-                                                                     });
+                                                                     $attr->_clear__expiration_date();
+                                                                    });
     }
 
 
@@ -139,11 +141,11 @@ after install_accessors => sub {
 sub _is_expired {
     my $attr = shift;
    
-    return undef unless defined $attr->expiration_date(); 
+    return 0 unless $attr->has__expiration_date(); 
 
     my $now = DateTime->now();
 
-    if ($now >= $attr->expiration_date()) {
+    if ($now >= $attr->_expiration_date()) {
         return 1;
     }
     else {
@@ -151,39 +153,38 @@ sub _is_expired {
     }
 }
 
-sub _reset_expiration_date {
-    my $attr= shift;
+sub _reset__expiration_date {
+    my $attr = shift;
 
     #TODO: test this!
-    return $attr->expiration_date($attr->expires_at()) if $attr->has_expires_at();
+    return $attr->_expiration_date($attr->expires_at()) if $attr->has_expires_at();
 
     my $expires_date = DateTime->now();
    
     $expires_date->add($attr->expires_in());
           
-    $attr->expiration_date($expires_date);
+    $attr->_expiration_date($expires_date);
   
     return 1;
 }
 
 sub _get_fresh_value {
-    my ($attr, $attr_instance) = @_;
+    my ($attr, $container) = @_;
 
     if ($attr->_is_expired()) {
-        $attr->clear_value($attr_instance);
- 
+        $attr->clear_value($container);
+
         if ($attr->is_lazy()) {
-            return $attr->get_value($attr_instance); 
+            return $attr->get_value($container); 
         }
         else {
             # for non-lazy attributes I am just going to return the default, which may be undef.
             # Is this a good idea? It might be better to demand or assert laziness.
-            
             return $attr->default();
         }
     }
     else {
-        $attr->get_value($attr_instance);
+        $attr->get_value($container);
     }
 }
 
